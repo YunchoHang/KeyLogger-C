@@ -100,6 +100,3 @@ sudo apt-get install libx11-dev
 This project is for educational purposes only. Unauthorized use of keyloggers can violate privacy laws. Always obtain proper consent before running this program.
 
 ---
-
-## **License**
-This project is licensed under the MIT License. See the `LICENSE` file for details.
