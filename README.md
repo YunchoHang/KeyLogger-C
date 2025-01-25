@@ -24,8 +24,8 @@ sudo apt-get install libx11-dev
 ## **Installation**
 1. Clone this repository or copy the source code:
    ```bash
-   git clone https://github.com/your-username/x11-keylogger.git
-   cd x11-keylogger
+   git clone https://github.com/YunchoHang/KeyLogger-C.git
+   cd KeyLogger-C
    ```
 
 2. Compile the code using `gcc`:
